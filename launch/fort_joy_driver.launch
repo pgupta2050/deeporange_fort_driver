@@ -1,0 +1,20 @@
+<!-- -*- mode: XML -*- -->
+<launch>
+
+  <arg name="can_hardware_id" default="042774" />
+  <arg name="can_circuit_id" default="0" />
+  <arg name="can_bit_rate" default="250000" />
+
+  <node ns="can0" pkg="kvaser_interface" type="kvaser_can_bridge" name="kvaser_can_bridge">
+    <param name="can_hardware_id" value="$(arg can_hardware_id)" />
+    <param name="can_circuit_id" value="$(arg can_circuit_id)" />
+    <param name="can_bit_rate" value="$(arg can_bit_rate)" />
+  </node>
+
+  <node ns="vehicle" pkg="deeporange_fort_driver" type="deeporange_fort_driver_node" name="fortjoy" output="screen">
+    <param name="jostick_dbc_file" textfile="$(find deeporange_fort_driver)/do13_fort.dbc" />
+    <remap from="can_tx" to="/can0/can_rx" />
+    <remap from="can_rx" to="/can0/can_tx" />
+  </node>
+
+</launch>
