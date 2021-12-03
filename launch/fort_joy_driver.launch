@@ -1,4 +1,4 @@
-<!-- -*- mode: XML -*- -->
+<?xml version="1.0"?>
 <launch>
 
   <arg name="can_hardware_id" default="042774" />
