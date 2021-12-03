@@ -13,6 +13,7 @@
 #include <std_msgs/Empty.h>
 #include <std_msgs/Bool.h>
 #include <std_msgs/String.h>
+#include <deeporange_fort_driver/JoyMisc.h>
 
 // Can dbc parser mackage
 #include <can_dbc_parser/DbcMessage.h>
@@ -45,6 +46,7 @@ namespace do_fortrobotics_can
         ros::Publisher pub_joy_;
         //ros::Publisher pub_chat_;
         ros::Publisher pub_estop_;
+        ros::Publisher pub_joyMisc_;
         // Subscribed topics
         ros::Subscriber sub_can_;
 
@@ -52,16 +54,24 @@ namespace do_fortrobotics_can
         NewEagle::Dbc joystickDbc_;
         std::string dbcFile_;
         sensor_msgs::Joy joyMsgfromFort;
-        //std_msgs::Header joyHeader;
+
 
         // axes and button value variables
         float lx, ly, rx, ry, lz, rz;
         int lb1, lb2, lb3, lb4, rb1, rb2, rb3, rb4;
 
-        // E-stop indicator
-        int estop_;
+        // E-stop indicator variables
+        long int estop_;
+
+        // Msg variables
+        deeporange_fort_driver::JoyMisc joyMisc_msg;
         int autonomy_mode_;
         int vsc_mode_;
+
+        //remote status variables
+        int battery_level_;
+        int connection_strength_;
+        int battery_charging_;
 
     };
 } // do_fortrobotics_can

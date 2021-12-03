@@ -16,6 +16,23 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   std_msgs
   geometry_msgs
+  message_generation
+)
+
+add_message_files(DIRECTORY msg FILES
+  JoyMisc.msg
+)
+
+generate_messages(DEPENDENCIES
+  std_msgs
+  geometry_msgs
+)
+
+catkin_package(CATKIN_DEPENDS
+  message_runtime
+  std_msgs
+  geometry_msgs
+  sensor_msgs
 )
 
 catkin_package(

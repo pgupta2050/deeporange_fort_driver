@@ -10,7 +10,7 @@ FortJoyNode::FortJoyNode(ros::NodeHandle &node, ros::NodeHandle &priv_nh)
     priv_nh.getParam("jostick_dbc_file", dbcFile_);
     
     // Initialise joystick vals
-    estop_ = 1; // start with e stop on by default and wait to be set to 0
+    estop_ = 1; // start with e-stop on by default and wait to be set to 0
     lx = ly = lz = rx = ry = rz = 0;
     lb1 = lb2 = lb3 = lb4 = 0;
     rb1 = rb2 = rb3 = rb4 = 0;
@@ -19,8 +19,9 @@ FortJoyNode::FortJoyNode(ros::NodeHandle &node, ros::NodeHandle &priv_nh)
 
     // Subscribers and publishers
     pub_joy_ = node.advertise<sensor_msgs::Joy>("fort_joy",10);
-    sub_can_ = node.subscribe("can_rx", 100, &FortJoyNode::recvCAN, this, ros::TransportHints().tcpNoDelay(true));
-    pub_estop_ = node.advertise<std_msgs::Bool>("fort_estop", 100);
+    sub_can_ = node.subscribe("can_rx", 10, &FortJoyNode::recvCAN, this, ros::TransportHints().tcpNoDelay(true));
+    pub_estop_ = node.advertise<std_msgs::Bool>("fort_estop", 10);
+    pub_joyMisc_ = node.advertise<deeporange_fort_driver::JoyMisc>("fort_joyMisc",10);
 
     // for debugging - pub and sub for chatter
     //pub_chat_ = node.advertise<std_msgs::String>("chatter1", 1000);
@@ -88,11 +89,6 @@ void FortJoyNode::recvCAN(const can_msgs::Frame::ConstPtr& msg)
                     }
                     lx_magnitude = message->GetSignal("Left_X_Magnitude")->GetResult();
                     lx = lx_magnitude*(float)lx_sign;
-                    //int lx_p = message->GetSignal("Left_X_PositiveStatus")->GetResult();
-                    //int lx_n = message->GetSignal("Left_X_NegativeStatus")->GetResult();
-                    //int lx_neu = message->GetSignal("Left_X_NeutralStatus")->GetResult();
-                    //ROS_WARN("Mag, neg, neutral, pos: %f %d %d %d",lx_magnitude, lx_n, lx_neu, lx_p);
-                    //ROS_WARN_THROTTLE(10,"Received left joy");
 
                     if (message->GetSignal("Left_Y_NeutralStatus")->GetResult() == 1)
                     // no X input on left joystick
@@ -187,11 +183,25 @@ void FortJoyNode::recvCAN(const can_msgs::Frame::ConstPtr& msg)
                 NewEagle::DbcMessage* message = joystickDbc_.GetMessageById(ID_HEARTBEAT);
                 if (msg->dlc >= message->GetDlc())
                 {
+                    message->SetFrame(msg);
                     estop_ = message->GetSignal("E_stop_indication")->GetResult();
-                    //autonomy_mode_ = message->GetSignal("Autonomy_Mode")->GetResult();
-                    //vsc_mode_ = message->GetSignal("VSC_Mode")->GetResult();
-                    vsc_mode_ = 2;
-                    //ROS_WARN_THROTTLE(5.0,"estop, auto, vsc %d %d %d",estop_,autonomy_mode_ ,vsc_mode_ );
+                    autonomy_mode_ = message->GetSignal("Autonomy_Mode")->GetResult();
+                    vsc_mode_ = message->GetSignal("VSC_Mode")->GetResult();
+                    //ROS_WARN_THROTTLE(5.0,"estop, auto, vsc %d %d %d", estop_, autonomy_mode_ ,vsc_mode_);
+                }
+            }
+            break;
+
+            case ID_REMOTE_STATUS:
+            {
+                NewEagle::DbcMessage* message = joystickDbc_.GetMessageById(ID_REMOTE_STATUS);
+                if (msg->dlc >= message->GetDlc())
+                {
+                    message->SetFrame(msg);
+                    battery_level_ = message->GetSignal("Battery_level")->GetResult();
+                    connection_strength_ = message->GetSignal("Connection_strength")->GetResult();
+                    battery_charging_ = message->GetSignal("Battery_charging")->GetResult();
+                    //ROS_WARN_THROTTLE(5.0,"battery level %d",battery_level_);o
                 }
             }
             break;
@@ -203,6 +213,8 @@ void FortJoyNode::recvCAN(const can_msgs::Frame::ConstPtr& msg)
 void FortJoyNode::publish_estop(const ros::TimerEvent&)
 {
     std_msgs::Bool estopMsg;
+    
+
     if (estop_ != 0)
     {
         estopMsg.data = 1;
@@ -213,6 +225,13 @@ void FortJoyNode::publish_estop(const ros::TimerEvent&)
         estopMsg.data = 0;
         pub_estop_.publish(estopMsg);
     }
+
+    joyMisc_msg.vsc_mode = vsc_mode_;
+    joyMisc_msg.autonomy_mode = autonomy_mode_;
+    joyMisc_msg.battery_level = battery_level_;
+    joyMisc_msg.connection_strength = connection_strength_;
+    joyMisc_msg.battery_charging_status = battery_charging_;
+    pub_joyMisc_.publish(joyMisc_msg);
 }
 
 } // do_fortrobotics_can
