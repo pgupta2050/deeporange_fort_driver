@@ -1,11 +1,18 @@
-#  Deep Orange Fort Robotics Joystick driver
+#  Fort Robotics Joystick driver for Deep Orange 
 
 ## About
+This package unpacks the can messages that are over ROS topics (over /can0/can_tx), and with the use of the can_dbc_parser ROS package, converts them to meaningful values mapping to each of the inputs from the joystick. This includes the left and right joy axes, the 8 buttons and estop button on the Fort Robotics SRC.
 
 ## Prerequisite packages
 In order to use this driver, following ROS packages are needed:
 1. kvaser_interface (https://github.com/astuff/kvaser_interface) 
 2. can_dbc_parser (https://github.com/NewEagleRaptor/raptor-dbw-ros/tree/master/can_dbc_parser)
+
+## Published Topics
+(Cuurrent launch files uses "/vehicle" namespace for launchin the node)
+1. /fort_estop: Bool for E-stop enabled/disabled
+2. /fort_joy: sensor_msgs::Joy message
+3. /fort_joyMisc : Info on SRC's battery status, connection strength to VSC, current VSC operation mode etc.
 
 ## Dependencies
 To be updated
